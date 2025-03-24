@@ -52,11 +52,11 @@ $(document).ready(function() {
 	// Initialize all div with carousel class
 	var carousels = bulmaCarousel.attach('.carousel', options);
 
-	var videos1 = preloadInterpolationVideos('scale1');
-	$('#interpolation-slider-1').on('input', function() {
-		setInterpolationVideo(this.value, videos1, '#interpolation-video-wrapper-1');
-	});
-	setInterpolationVideo(0, videos1, '#interpolation-video-wrapper-1');
+	// var videos1 = preloadInterpolationVideos('scale1');
+	// $('#interpolation-slider-1').on('input', function() {
+	// 	setInterpolationVideo(this.value, videos1, '#interpolation-video-wrapper-1');
+	// });
+	// setInterpolationVideo(0, videos1, '#interpolation-video-wrapper-1');
 
 	var videos2 = preloadInterpolationVideos('scale2');
 	$('#interpolation-slider-2').on('input', function() {
