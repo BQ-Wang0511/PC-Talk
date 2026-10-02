@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pc-talk"
+version = "0.1.0"
+description = "Precise facial animation control for audio-driven talking faces"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dynamic = ["dependencies"]
+
+[project.scripts]
+pctalk = "pctalk.cli:main"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pctalk*"]
+
+[tool.setuptools.package-data]
+"pctalk" = [
+    "checkpoints/*.pth",
+    "checkpoints/*.md",
+    "checkpoints/SHA256SUMS",
+    "checkpoints/liveportrait/*.onnx",
+    "checkpoints/liveportrait/base_models/*.pth",
+    "checkpoints/liveportrait/retargeting_models/*.pth",
+    "checkpoints/insightface/models/buffalo_l/*.onnx",
+]
+"pctalk.liveportrait.config" = ["*.yaml"]
+"pctalk.liveportrait.utils" = ["resources/*.pkl", "resources/*.png"]
+"pctalk.liveportrait.utils.dependencies.insightface.data" = [
+    "images/*",
+    "objects/*",
+]

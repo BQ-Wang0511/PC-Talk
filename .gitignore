@@ -1,0 +1,10 @@
+__pycache__/
+.ruff_cache/
+*.py[cod]
+animations/
+outputs/
+
+# Checkpoint directories remain local and are excluded from the source release.
+ckpt/
+checkpoints/
+*.ckpt

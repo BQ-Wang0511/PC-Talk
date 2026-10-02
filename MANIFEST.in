@@ -1,0 +1,6 @@
+include LICENSE
+include README.md
+include RELEASE_CHECKLIST.md
+include THIRD_PARTY_NOTICES.md
+include requirements.txt
+recursive-include examples *.md *.png *.sh
