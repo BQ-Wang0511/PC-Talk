@@ -10,14 +10,18 @@ Official repository for the CVPR 2026 paper
 
 <sup>*</sup>Corresponding author
 
-[arXiv](https://arxiv.org/abs/2503.14295) · [Project Page](https://bq-wang0511.github.io/PC-Talk/)
+[![arXiv](https://img.shields.io/badge/arXiv-2503.14295-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2503.14295)
+[![Project Page](https://img.shields.io/badge/Project-Page-2ea44f?logo=googlechrome&logoColor=white)](https://bq-wang0511.github.io/PC-Talk/)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Checkpoints-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/doubi-killer/PC-Talk)
 
 ## Standalone inference
 
 This directory is a self-contained source release of **PC-Talk: Precise Facial
 Animation Control for Audio-Driven Talking Face Generation**. It does not
 import code or configuration from the parent research repository. Runtime
-checkpoints follow the included manifest and are distributed separately.
+checkpoints are distributed separately on
+[Hugging Face](https://huggingface.co/doubi-killer/PC-Talk), together with their
+SHA-256 integrity manifest.
 
 ## Integrated architecture
 
@@ -65,25 +69,95 @@ opensource/
 └── requirements.txt
 ```
 
-Runtime checkpoints are intentionally excluded from Git. Place the
-LivePortrait, face detector, landmark, audio encoder, LAC/refinement, EMC, and
-reference-style encoder weights under `pctalk/checkpoints` as described in
-`pctalk/checkpoints/README.md`. Expected file integrity hashes are recorded in
-`pctalk/checkpoints/SHA256SUMS`.
+Runtime checkpoints are intentionally excluded from Git. Download them from
+[doubi-killer/PC-Talk on Hugging Face](https://huggingface.co/doubi-killer/PC-Talk)
+and place them under `pctalk/checkpoints` using the instructions below.
 
 ## Installation
 
-Create an environment with a PyTorch build suitable for the target CUDA/CPU
-platform, then install from this directory:
+Clone the source repository and create an environment with a PyTorch build
+suitable for the target CUDA/CPU platform, then install:
 
 ```bash
-cd opensource
+git clone https://github.com/BQ-Wang0511/PC-Talk.git
+cd PC-Talk
 pip install -r requirements.txt
 pip install -e .
 ```
 
 FFmpeg and FFprobe must be available on `PATH`. Inference uses 16 kHz mono
 audio and produces 25 fps video.
+
+## Download and configure checkpoints
+
+All 12 runtime model files are hosted at
+[https://huggingface.co/doubi-killer/PC-Talk](https://huggingface.co/doubi-killer/PC-Talk).
+They include the PC-Talk audio encoder, LAC/refinement, EMC, reference-style
+encoder, LivePortrait models, landmark model, and face detectors (about 920 MB
+in total). Model files are not stored in the GitHub source repository.
+
+Run the following commands **from the PC-Talk repository root**:
+
+```bash
+pip install -U huggingface_hub
+hf download doubi-killer/PC-Talk --local-dir pctalk/checkpoints
+```
+
+The download preserves the model directory structure. Do not create an extra
+`PC-Talk/` or `checkpoints/` folder inside `pctalk/checkpoints`:
+
+```text
+pctalk/checkpoints/
+├── audio_encoder.pth
+├── lac.pth
+├── emc.pth
+├── style_encoder.pth
+├── SHA256SUMS
+├── liveportrait/
+│   ├── landmark.onnx
+│   ├── base_models/
+│   │   ├── appearance_feature_extractor.pth
+│   │   ├── motion_extractor.pth
+│   │   ├── spade_generator.pth
+│   │   └── warping_module.pth
+│   └── retargeting_models/
+│       └── stitching_retargeting_module.pth
+└── insightface/
+    └── models/buffalo_l/
+        ├── 2d106det.onnx
+        └── det_10g.onnx
+```
+
+Alternatively, download through the Python API:
+
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="doubi-killer/PC-Talk",
+    local_dir="pctalk/checkpoints",
+)
+```
+
+For a manual download, open the Hugging Face repository's **Files and versions**
+tab and copy the files into the exact paths shown above, preserving the
+`liveportrait/` and `insightface/` subdirectories.
+
+The CLI uses this directory by default; no source-code changes are required.
+`lac.pth` contains both the LAC model and its refinement model. `emc.pth` is
+used for emotion control, and `style_encoder.pth` is used with reference-style
+input. Custom LAC and EMC locations can be passed with `--lac-checkpoint` and
+`--emc-checkpoint`.
+
+On Linux, verify all 12 model files from the repository root:
+
+```bash
+sha256sum -c pctalk/checkpoints/SHA256SUMS
+```
+
+Checkpoint files remain ignored by Git. Third-party weights retain their
+upstream usage terms; in particular, the InsightFace model assets are for
+non-commercial research use and should be replaced for commercial deployment.
 
 ## Image-driven example
 
