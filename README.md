@@ -14,66 +14,15 @@ Official repository for the CVPR 2026 paper
 [![Project Page](https://img.shields.io/badge/Project-Page-2ea44f?logo=googlechrome&logoColor=white)](https://bq-wang0511.github.io/PC-Talk/)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Checkpoints-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/doubi-killer/PC-Talk)
 
-## Standalone inference
+## Introduction
 
-This directory is a self-contained source release of **PC-Talk: Precise Facial
-Animation Control for Audio-Driven Talking Face Generation**. It does not
-import code or configuration from the parent research repository. Runtime
-checkpoints are distributed separately on
-[Hugging Face](https://huggingface.co/doubi-killer/PC-Talk), together with their
-SHA-256 integrity manifest.
+PC-Talk generates audio-driven talking faces with precise control over
+speaking style, lip articulation, and facial emotion.
 
 ![PC-Talk overview: speaking style, lip articulation, and emotion control](assets/first_pic.png)
 
-## Integrated architecture
-
-```text
-audio -> bundled AV encoder -> LAC -> EMC -> LivePortrait warping/decoder -> video
-                               ^      ^
-                          style/lip  emotion controls
-```
-
-`PCTalkPipeline` extends the bundled `LivePortraitPipeline` and owns the audio
-encoder, LAC, and EMC models. Motion stays in memory throughout inference; no
-subprocess or temporary pickle is used between audio-to-motion and rendering.
-Motion pickle export remains available as an explicit diagnostic feature.
-
-- **LAC** predicts the six semantic lip-keypoint deformations. It supports
-  preset style IDs, reference-video styles, overlapping autoregressive
-  inference, refinement MLP, lip-motion scale, and pursing/widening/opening
-  articulation editing.
-- **EMC** computes pure emotion as emotional combined deformation minus neutral
-  combined deformation. Multiple emotions can be composed by intensity and
-  facial region.
-- **LivePortrait** is bundled under `pctalk/liveportrait` and performs face
-  cropping, implicit-keypoint extraction, warping, decoding, stitching,
-  paste-back, and audio muxing.
-
-## Directory layout
-
-```text
-opensource/
-├── pctalk/
-│   ├── models/                 # audio encoder, LAC, EMC, style/refinement
-│   ├── liveportrait/           # bundled human LivePortrait backend
-│   ├── checkpoints/            # checkpoint manifest and local weight location
-│   ├── audio_features.py
-│   ├── motion_controls.py
-│   ├── pipeline.py
-│   └── cli.py
-├── tests/
-├── examples/
-│   ├── assets/obama.jpg
-│   ├── run_image.sh
-│   └── run_video.sh
-├── inference.py
-├── pyproject.toml
-└── requirements.txt
-```
-
-Runtime checkpoints are intentionally excluded from Git. Download them from
-[doubi-killer/PC-Talk on Hugging Face](https://huggingface.co/doubi-killer/PC-Talk)
-and place them under `pctalk/checkpoints` using the instructions below.
+PC-Talk uses **LAC** for speaking-style and lip-articulation control,
+**EMC** for emotion control, and **LivePortrait** for portrait animation.
 
 ## Installation
 
@@ -133,11 +82,8 @@ and `ffprobe -version`.
 
 ## Download and configure checkpoints
 
-All 12 runtime model files are hosted at
+Download the pretrained models from
 [https://huggingface.co/doubi-killer/PC-Talk](https://huggingface.co/doubi-killer/PC-Talk).
-They include the PC-Talk audio encoder, LAC/refinement, EMC, reference-style
-encoder, LivePortrait models, landmark model, and face detectors (about 920 MB
-in total). Model files are not stored in the GitHub source repository.
 
 Run the following commands **from the PC-Talk repository root**:
 
@@ -155,7 +101,6 @@ pctalk/checkpoints/
 ├── lac.pth
 ├── emc.pth
 ├── style_encoder.pth
-├── SHA256SUMS
 ├── liveportrait/
 │   ├── landmark.onnx
 │   ├── base_models/
@@ -171,17 +116,6 @@ pctalk/checkpoints/
         └── det_10g.onnx
 ```
 
-Alternatively, download through the Python API:
-
-```python
-from huggingface_hub import snapshot_download
-
-snapshot_download(
-    repo_id="doubi-killer/PC-Talk",
-    local_dir="pctalk/checkpoints",
-)
-```
-
 For a manual download, open the Hugging Face repository's **Files and versions**
 tab and copy the files into the exact paths shown above, preserving the
 `liveportrait/` and `insightface/` subdirectories.
@@ -191,16 +125,6 @@ The CLI uses this directory by default; no source-code changes are required.
 used for emotion control, and `style_encoder.pth` is used with reference-style
 input. Custom LAC and EMC locations can be passed with `--lac-checkpoint` and
 `--emc-checkpoint`.
-
-On Linux, verify all 12 model files from the repository root:
-
-```bash
-sha256sum -c pctalk/checkpoints/SHA256SUMS
-```
-
-Checkpoint files remain ignored by Git. Third-party weights retain their
-upstream usage terms; in particular, the InsightFace model assets are for
-non-commercial research use and should be replaced for commercial deployment.
 
 ## Image-driven example
 
@@ -227,9 +151,7 @@ python -m pctalk \
   --output-dir outputs/image_example
 ```
 
-Each run writes only the final animation. PC-Talk does not create a
-side-by-side comparison file. The video uses an unused random 10-digit numeric
-filename such as `4839201746.mp4`, and the CLI prints its full output path.
+The generated video is saved in `--output-dir`.
 
 Without a motion reference, a source image supplies a static head pose while
 LAC and EMC animate its mouth and expression. To borrow head motion from
@@ -268,30 +190,6 @@ pose sequence with another reference.
 
 ## Additional inference controls
 
-From inside this directory, either the installed command or the standalone
-script can be used:
-
-```bash
-pctalk \
-  --source path/to/source.jpg \
-  --audio path/to/speech.wav \
-  --person-id 192 \
-  --lip-scale 0.6 \
-  --output-dir outputs
-```
-
-Equivalent without installing the console entry point:
-
-```bash
-python -m pctalk \
-  --source path/to/source.jpg \
-  --audio path/to/speech.wav \
-  --person-id 192 \
-  --lip-scale 0.6
-```
-
-`python inference.py` remains available as a compatibility entry point.
-
 Reference speaking style and emotion:
 
 ```bash
@@ -328,50 +226,6 @@ Useful controls:
   the base pose.
 - `--articulation NAME:SCALE`: edit `pursing`, `widening`, or `opening`; the
   option may be repeated.
-- `--output-motion path.pkl`: explicitly export generated motion.
-- `--no-motion-smoothing`: disable the post-generation Kalman smoother.
-
-## Python API
-
-```python
-from pctalk import (
-    AudioConfig,
-    EMCConfig,
-    EmotionCondition,
-    LACConfig,
-    LipArticulationEdit,
-    PCTalkPipeline,
-)
-from pctalk.liveportrait.config.crop_config import CropConfig
-from pctalk.liveportrait.config.inference_config import InferenceConfig
-
-pipeline = PCTalkPipeline(
-    inference_cfg=InferenceConfig(flag_relative_motion=False),
-    crop_cfg=CropConfig(),
-    audio_cfg=AudioConfig(),
-    lac_cfg=LACConfig(
-        articulation_edits=(LipArticulationEdit("pursing", 1.2),),
-    ),
-    emc_cfg=EMCConfig(checkpoint="pctalk/checkpoints/emc.pth"),
-)
-
-motion = pipeline.generate_motion(
-    "speech.wav",
-    "source.jpg",
-    [EmotionCondition("happy", intensity=0.5, region="lips")],
-)
-```
-
-## Tests
-
-```bash
-python -m unittest discover -s tests -v
-python -m compileall -q pctalk inference.py
-```
-
-Run the tests after placing the separately distributed checkpoints in their
-documented locations. The lightweight asset test verifies that every required
-runtime file is present but does not load the neural networks.
 
 ## Citation
 
@@ -399,10 +253,7 @@ open-source projects. We sincerely thank their authors and contributors:
 - [Wav2Lip](https://github.com/Rudrabha/Wav2Lip) provides the foundation for
   the audio feature encoder and mel-spectrogram preprocessing design.
 
-## Security and licensing
+## License
 
-Motion templates use Python pickle and must only be loaded from trusted
-sources. See `THIRD_PARTY_NOTICES.md` and `RELEASE_CHECKLIST.md` before public
-distribution. In particular, the bundled InsightFace-compatible model assets
-are restricted to non-commercial research use and should be replaced for
-commercial deployment.
+See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+InsightFace model assets are restricted to non-commercial research use.
