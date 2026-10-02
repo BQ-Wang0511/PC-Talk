@@ -75,18 +75,59 @@ and place them under `pctalk/checkpoints` using the instructions below.
 
 ## Installation
 
-Clone the source repository and create an environment with a PyTorch build
-suitable for the target CUDA/CPU platform, then install:
+Use **Python 3.10–3.12** (Python 3.10 is recommended). NumPy is constrained to
+1.x, and OpenCV is constrained to versions below 4.12 to avoid its NumPy 2.x
+requirement. Create a fresh environment and install a PyTorch build suitable
+for your platform using the [official PyTorch installer](https://pytorch.org/get-started/locally/).
+Then clone the source repository:
 
 ```bash
 git clone https://github.com/BQ-Wang0511/PC-Talk.git
 cd PC-Talk
-pip install -r requirements.txt
-pip install -e .
 ```
 
+Choose **one** ONNX Runtime backend. These commands also install the core
+dependencies from `requirements.txt`:
+
+```bash
+# CPU ONNX backend (also suitable for macOS)
+pip install -e ".[cpu]"
+
+# OR: NVIDIA GPU ONNX backend
+pip install -e ".[gpu]"
+```
+
+Do not install both `onnxruntime` and `onnxruntime-gpu`: they provide the same
+Python module. When switching backends in an existing environment, first run
+`pip uninstall -y onnxruntime onnxruntime-gpu`, then install the chosen extra
+above. `requirements.txt` contains only the core dependencies; installing it
+alone does not install an ONNX Runtime backend.
+
+For GPU execution, your ONNX Runtime GPU version must match the installed
+CUDA/cuDNN libraries and PyTorch build. Consult the
+[official CUDA/cuDNN compatibility table](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements)
+and select a compatible `onnxruntime-gpu` version; the `[gpu]` extra alone does
+not configure NVIDIA drivers or system CUDA libraries. The CPU backend runs
+face detection and landmarks on CPU even if PyTorch uses a GPU; it does not
+force the main PyTorch models to run on CPU. Use the CLI's `--force-cpu`
+option for full CPU inference.
+
+Check the installation and available ONNX providers:
+
+```bash
+python -m pip check
+python -c "import torch, onnxruntime as ort; print('Torch CUDA:', torch.cuda.is_available()); print('ONNX providers:', ort.get_available_providers())"
+```
+
+GPU ONNX execution requires `CUDAExecutionProvider` in the provider list;
+initialising a model session must also succeed with compatible CUDA/cuDNN
+libraries.
+
 FFmpeg and FFprobe must be available on `PATH`. Inference uses 16 kHz mono
-audio and produces 25 fps video.
+audio and produces 25 fps video. Install these system tools separately (for
+example, `conda install -c conda-forge ffmpeg`); `imageio-ffmpeg` does not
+guarantee both commands are available on `PATH`. Verify with `ffmpeg -version`
+and `ffprobe -version`.
 
 ## Download and configure checkpoints
 

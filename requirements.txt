@@ -1,17 +1,19 @@
+# Core dependencies. Select one ONNX Runtime backend with:
+# pip install -e ".[cpu]" OR pip install -e ".[gpu]"
 torch>=2.1
 numpy>=1.26,<2
 PyYAML>=6.0
-opencv-python>=4.10
+opencv-python>=4.10,<4.12
 scipy>=1.13
 imageio>=2.34
 imageio-ffmpeg>=0.5
 rich>=13.7
 onnx>=1.16
-onnxruntime>=1.18
 scikit-image>=0.24
 pykalman>=0.9.7
 Pillow>=10.2
 librosa>=0.10.1
 requests>=2.31
+tqdm>=4.66
 typing-extensions>=4.10
 tyro>=0.8.5

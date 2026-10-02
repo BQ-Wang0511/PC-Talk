@@ -7,9 +7,13 @@ name = "pc-talk"
 version = "0.1.0"
 description = "Precise facial animation control for audio-driven talking faces"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = {file = "LICENSE"}
 dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+cpu = ["onnxruntime>=1.18"]
+gpu = ["onnxruntime-gpu>=1.18"]
 
 [project.scripts]
 pctalk = "pctalk.cli:main"
