@@ -23,6 +23,8 @@ checkpoints are distributed separately on
 [Hugging Face](https://huggingface.co/doubi-killer/PC-Talk), together with their
 SHA-256 integrity manifest.
 
+![PC-Talk overview: speaking style, lip articulation, and emotion control](assets/first_pic.png)
+
 ## Integrated architecture
 
 ```text
